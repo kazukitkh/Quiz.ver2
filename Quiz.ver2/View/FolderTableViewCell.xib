@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="75" id="KGk-i7-Jjw" customClass="FolderTableViewCell" customModule="Quiz_ver2" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="351" height="75"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="351" height="75"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="kwR-6m-dLL">
+                        <rect key="frame" x="0.0" y="5" width="351" height="65"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Folder Name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bsx-0X-P4S">
+                                <rect key="frame" x="20" y="8" width="98" height="49"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" restorationIdentifier="FolderCell" text="Number" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="coA-JQ-b9a">
+                                <rect key="frame" x="269.5" y="8" width="61.5" height="49"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="coA-JQ-b9a" secondAttribute="trailing" constant="20" id="AUU-M7-Wed"/>
+                            <constraint firstAttribute="bottom" secondItem="coA-JQ-b9a" secondAttribute="bottom" constant="8" id="NKm-4O-uLa"/>
+                            <constraint firstItem="coA-JQ-b9a" firstAttribute="top" secondItem="kwR-6m-dLL" secondAttribute="top" constant="8" id="dQK-Vy-Mol"/>
+                            <constraint firstItem="bsx-0X-P4S" firstAttribute="leading" secondItem="kwR-6m-dLL" secondAttribute="leading" constant="20" id="dsg-9D-yEJ"/>
+                            <constraint firstAttribute="bottom" secondItem="bsx-0X-P4S" secondAttribute="bottom" constant="8" id="rGl-rh-9z3"/>
+                            <constraint firstItem="bsx-0X-P4S" firstAttribute="top" secondItem="kwR-6m-dLL" secondAttribute="top" constant="8" id="y7w-QT-Js9"/>
+                        </constraints>
+                    </view>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="trailing" secondItem="kwR-6m-dLL" secondAttribute="trailing" id="8DB-tw-Why"/>
+                    <constraint firstItem="kwR-6m-dLL" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="5" id="KY5-vi-9aa"/>
+                    <constraint firstAttribute="bottom" secondItem="kwR-6m-dLL" secondAttribute="bottom" constant="5" id="UCy-Wd-YcP"/>
+                    <constraint firstItem="kwR-6m-dLL" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="VDw-wB-W4H"/>
+                </constraints>
+            </tableViewCellContentView>
+            <viewLayoutGuide key="safeArea" id="njF-e1-oar"/>
+            <connections>
+                <outlet property="cellScreen" destination="H2p-sc-9uM" id="gQx-Z3-rRS"/>
+                <outlet property="folderName" destination="bsx-0X-P4S" id="KEt-1Y-Yce"/>
+                <outlet property="numberOfContent" destination="coA-JQ-b9a" id="5wt-4e-ecN"/>
+            </connections>
+            <point key="canvasLocation" x="160.1449275362319" y="136.27232142857142"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
+</document>
