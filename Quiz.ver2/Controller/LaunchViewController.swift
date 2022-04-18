@@ -17,11 +17,12 @@ class LaunchViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        if let user = Auth.auth().currentUser, user.isEmailVerified {
+        if let _ = Auth.auth().currentUser {// , user.isEmailVerified
             let storyboard: UIStoryboard = self.storyboard!
             let next = storyboard.instantiateViewController(withIdentifier: K.homeStoryBoardId) as! HomeViewController
             let nav = UINavigationController(rootViewController: next)
             nav.modalPresentationStyle = .fullScreen
+            nav.modalTransitionStyle = .crossDissolve
             self.present(nav, animated: true)
         } else {
             do {
@@ -41,8 +42,19 @@ class LaunchViewController: UIViewController {
         let next = storyboard.instantiateViewController(withIdentifier: K.registerStoryBoardId) as! RegisterViewController
         let nav = UINavigationController(rootViewController: next)
         nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
         present(nav, animated: true)
     }
+    
+    @IBAction func logInButtonPressed(_ sender: Any) {
+        let storyboard: UIStoryboard = self.storyboard!
+        let next = storyboard.instantiateViewController(withIdentifier: K.loginStoryBoardId) as! LoginViewController
+        let nav = UINavigationController(rootViewController: next)
+        nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
+        present(nav, animated: true)
+    }
+    
     
     func makeAlerts(title: String, message: String, buttonName: String) {
         let dialog = UIAlertController(title: title, message: message, preferredStyle: .alert)

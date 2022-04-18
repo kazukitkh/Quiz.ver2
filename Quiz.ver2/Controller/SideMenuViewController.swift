@@ -29,6 +29,11 @@ class SideMenuViewController: UIViewController, confirmDelegate {
     
     @IBOutlet weak var sideMenuTableView: UITableView!
     
+    var isLearnEnd: Bool = false {
+        didSet {
+            self.sideMenuTableView.reloadData()
+        }
+    }
     var numberOfAttributes: Int = 2
     var menu: [SideMenuModel] = []
     var changeAttributeRank: Bool = false {
@@ -41,8 +46,17 @@ class SideMenuViewController: UIViewController, confirmDelegate {
             self.sideMenuTableView.reloadData()
         }
     }
-    var attributes: [String] = []
-    var rankedAttribute: [Int] = []
+    var attributes: [String] = [] {
+        didSet {
+            self.sideMenuTableView.reloadData()
+        }
+    }
+    var rankedAttribute: [Int] = [] {
+        didSet {
+            numberOfAttributes = rankedAttribute.count
+            self.sideMenuTableView.reloadData()
+        }
+    }
     var defaultHighlightedCell: Int = 0
     var delegate: SideMenuViewDelegate?
     
@@ -86,6 +100,7 @@ class SideMenuViewController: UIViewController, confirmDelegate {
                 while num > self.rankedAttribute.count {
                     self.rankedAttribute.append(0)
                 }
+                self.rankedAttribute = Array(self.rankedAttribute[0..<num])
                 self.numberOfAttributes = num
                 self.sideMenuTableView.reloadData()
             }))
@@ -102,6 +117,9 @@ extension SideMenuViewController: UITableViewDelegate {
 
 extension SideMenuViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if isLearnEnd {
+            return 1
+        }
         if changeAttributeRank {
             return numberOfAttributes + 2
         } else if changeAttributeName {

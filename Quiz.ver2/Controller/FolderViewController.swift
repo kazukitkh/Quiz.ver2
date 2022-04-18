@@ -26,13 +26,15 @@ class FolderViewController: UIViewController {
     let actionButton = DTZFloatingActionButton()
     var userID: String?
     var backBarButtonItem: UIBarButtonItem!
+    var logOutButtonItem: UIBarButtonItem!
     
     @IBOutlet weak var folderTableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //        self.title = folderName
+        logOutButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrowshape.zigzag.right"), style: .plain, target: self, action: #selector(logOutPressed(_:)))
+        navigationItem.rightBarButtonItem = logOutButtonItem
         navigationItem.title = folderName
         backBarButtonItem = UIBarButtonItem(
             title: "Back", style: .plain, target: self, action: #selector(goBack(_:))
@@ -65,7 +67,32 @@ class FolderViewController: UIViewController {
         let next = storyboard.instantiateViewController(withIdentifier: K.homeStoryBoardId) as! HomeViewController
         let nav = UINavigationController(rootViewController: next)
         nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
         present(nav, animated: true)
+    }
+    
+    @objc func logOutPressed(_ sender: UIBarButtonItem) {
+        let alert = UIAlertController(
+            title: "Log Out",
+            message: "Are you sure you want to Log Out?",
+            preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(
+            UIAlertAction(
+                title: "Cancel",
+                style: UIAlertAction.Style.cancel,
+                handler: nil))
+        alert.addAction(
+            UIAlertAction(
+                title: "OK",
+                style: UIAlertAction.Style.default,
+                handler: {_ in
+                    do {
+                        try self.auth.signOut()
+                    } catch let err as NSError {
+                        self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
+                    }
+                }))
+        self.present(alert, animated: true, completion: nil)
     }
     
     func loadDecks(userID: String) {
@@ -171,6 +198,7 @@ extension FolderViewController: UITableViewDataSource {
         nextView.deckDocRef = colRef?.document(decks[indexPath.row].uniqueName)
         let nav = UINavigationController(rootViewController: nextView)
         nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
         self.present(nav, animated: true)
     }
     

@@ -48,34 +48,38 @@ class DeckEditViewController: UIViewController {
     var rankedAttributes: [Int] = [0, 1]
     let sideMenu: [SideMenuModel] = [
         SideMenuModel(icon: UIImage(named: "LogOutImage")!, title: "Log Out"),
-        SideMenuModel(icon: UIImage(systemName: "text.book.closed")!, title: "Choose using Attributes"),
+        SideMenuModel(icon: UIImage(systemName: "doc.circle")!, title: "Change Attribute Rank"),
         SideMenuModel(icon: UIImage(systemName: "pencil")!, title: "Change Attribute Names")
     ]
     
     @IBOutlet weak var shuffleButton: UIButton!
     @IBOutlet weak var reviseButton: UIButton!
     @IBOutlet weak var deckTableView: UITableView!
+    @IBOutlet weak var addButton: UIButton!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        actionButton.handler = {
-            button in
-            self.addContent(contentName: "")
-            print("button pressed")
+        if let user = auth.currentUser {
+            userID = user.uid
+            numberOfAttributes = rankedAttributes.count
+            loadContents(userID: userID)
+        } else {
+            let storyboard: UIStoryboard = self.storyboard!
+            let next = storyboard.instantiateViewController(withIdentifier: K.launchStoryBoardId) as! LaunchViewController
+            next.modalPresentationStyle = .fullScreen
+            self.present(next, animated: true, completion: nil)
         }
-        actionButton.isScrollView = true
-        view.insertSubview(actionButton, at: view.subviews.count)
         let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
         self.sideMenuViewController = storyboard.instantiateViewController(withIdentifier: K.sideMenuStoryBoardId) as? SideMenuViewController
-        loadSideMenuViewController()
         self.sideMenuViewController.delegate = self
         view.insertSubview(self.sideMenuViewController!.view, at: view.subviews.count)
         addChild(self.sideMenuViewController!)
         self.sideMenuViewController!.didMove(toParent: self)
-        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture))
-        panGestureRecognizer.delegate = self
-        view.addGestureRecognizer(panGestureRecognizer)
+//        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture))
+//        panGestureRecognizer.delegate = self
+//        view.addGestureRecognizer(panGestureRecognizer)
         self.sideMenuShadowView = UIView(frame: self.view.bounds)
         self.sideMenuShadowView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         self.sideMenuShadowView.backgroundColor = .black
@@ -103,6 +107,7 @@ class DeckEditViewController: UIViewController {
         ])
         //
         //        showMenu(shouldExpand: isExpanded)
+        
         backBarButtonItem = UIBarButtonItem(title: "back", style: .plain, target: self, action: #selector(goBack(_:)))
         moreBarButtonItem = UIBarButtonItem(image: UIImage(named: "MoreIcon"), style: .plain, target: revealViewController(), action: #selector(morePressed(_:)))
         self.navigationItem.title = deckName
@@ -115,16 +120,7 @@ class DeckEditViewController: UIViewController {
         deckTableView.delegate = self
         deckTableView.rowHeight = UITableView.automaticDimension
         deckTableView.register(UINib(nibName: K.cells.testCellNibName, bundle: nil), forCellReuseIdentifier: K.cells.testCellIdentifier)
-        if let user = auth.currentUser {
-            userID = user.uid
-            numberOfAttributes = rankedAttributes.count
-            loadContents(userID: userID)
-        } else {
-            let storyboard: UIStoryboard = self.storyboard!
-            let next = storyboard.instantiateViewController(withIdentifier: K.launchStoryBoardId) as! LaunchViewController
-            next.modalPresentationStyle = .fullScreen
-            self.present(next, animated: true, completion: nil)
-        }
+        loadSideMenuViewController()
     }
     
     @objc func morePressed(_ sender: UIBarButtonItem) {
@@ -140,6 +136,10 @@ class DeckEditViewController: UIViewController {
         }
     }
     
+    @IBAction func addButtonPressed(_ sender: Any) {
+        self.addContent(contentName: "")
+    }
+    
     
     @IBAction func reviseButtonPressed(_ sender: Any) {
         isRevise = !isRevise
@@ -153,50 +153,21 @@ class DeckEditViewController: UIViewController {
     @IBAction func learnButtonPressed(_ sender: Any) {
         let storyboard: UIStoryboard = self.storyboard!
         let next = storyboard.instantiateViewController(withIdentifier: K.learnStoryBoardId) as! LearnViewController
-        var newContents:[Content] = []
         next.folderUniqueName = folderUniqueName
         next.folderName = folderName
-        next.usingAttributes = Attributes
+        next.Attributes = Attributes
         next.deckName = deckName
         next.colRef = colRef
         next.deckDocRef = deckDocRef
+        next.deckUniqueName = deckUniqueName
         next.userID = userID
-        if isRevise {
-            for content in contents {
-                var ok: Bool = true
-                for (idx, num) in rankedAttributes.enumerated() {
-                    if idx == 0 {
-                        continue
-                    }
-                    colRef?.document(content.uniqueContentName).collection(K.Fstore.collections.term).document(String(num)).getDocument(completion: { snapshot, err in
-                        if let err = err {
-                            self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
-                        } else {
-                            if let doc = snapshot, doc.exists {
-                                let data = doc.data()
-                                if let arr = data?[K.Fstore.data.correctOrWrong] as? [Bool] {
-                                    if arr[self.rankedAttributes[0]] == false {
-                                        ok = false
-                                    }
-                                }
-                            }
-                        }
-                    })
-                }
-                if ok == false {
-                    newContents.append(content)
-                }
-            }
-        } else {
-            newContents = contents
-        }
-        if isShuffle {
-            newContents.shuffle()
-        }
-        next.contents = newContents
+        next.isRevise = isRevise
+        next.isShuffle = isShuffle
         next.rankedAttributes = rankedAttributes
+        next.contents = contents
         let nav = UINavigationController(rootViewController: next)
         nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
         present(nav, animated: true)
     }
     
@@ -207,10 +178,24 @@ class DeckEditViewController: UIViewController {
         next.folderUniqueName = folderUniqueName
         let nav = UINavigationController(rootViewController: next)
         nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
         present(nav, animated: true)
     }
     
     func loadContents(userID: String) {
+        deckDocRef?.addSnapshotListener({ snapshot, err in
+            if let err = err {
+                self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
+            } else {
+                if let doc = snapshot, doc.exists {
+                    let data = doc.data()
+                    if let attributes = data?[K.Fstore.data.attributes] as? [String], let rank = data?[K.Fstore.data.rank] as? [Int] {
+                        self.Attributes = attributes
+                        self.rankedAttributes = rank
+                    }
+                }
+            }
+        })
         colRef?.order(by: K.Fstore.data.lastMade).addSnapshotListener { querySnapshot, error in
             self.contents = []
             if let e = error {
@@ -220,11 +205,7 @@ class DeckEditViewController: UIViewController {
                     for contentDoc in snapshotDocs {
                         let data = contentDoc.data()
                         if let contentName = data[K.Fstore.data.contentName] as? String, let attributes = data[K.Fstore.data.attributes] as? [String], let groups = data[K.Fstore.data.groups] as? [Int] {
-                            var newAttributes: [String] = []
-                            for attIdx in self.rankedAttributes {
-                                newAttributes.append(attributes[attIdx])
-                            }
-                            let newContent = Content(uniqueContentName: contentName, attributes: newAttributes, groups: groups)
+                            let newContent = Content(uniqueContentName: contentName, attributes: attributes, groups: groups)
                             self.contents.append(newContent)
                             DispatchQueue.main.async {
                                 self.deckTableView.reloadData()
@@ -239,7 +220,6 @@ class DeckEditViewController: UIViewController {
                 }
             }
         }
-        //                print(contents)
     }
     
     func deleteContent(uniqueContentName: String) {
@@ -253,14 +233,11 @@ class DeckEditViewController: UIViewController {
     
     func sendData(uniqueContentName: String, attributeKey: Int, attributeValue: String) {
         let docRef = colRef!.document(uniqueContentName)
-        print("docRef: \(docRef.path)")
         docRef.getDocument { doc, error in
             if let err = error {
                 self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
             } else {
-                print("pattern1")
                 if let doc = doc, doc.exists {
-                    print("pattern2")
                     if let data = doc.data() {
                         if let temp = data[K.Fstore.data.attributes] as? [String] {
                             var newAttributes = temp
@@ -274,7 +251,6 @@ class DeckEditViewController: UIViewController {
                         }
                     }
                 } else {
-                    print("pattern3")
                     let newAttributes = [String](repeating: "", count: 7)
                     docRef.setData([
                         K.Fstore.data.contentName: uniqueContentName,
@@ -315,7 +291,6 @@ extension DeckEditViewController: UITableViewDataSource {
         cell.attribute5Height.constant = 40
         cell.attribute6Height.constant = 40
         cell.attribute7Height.constant = 40
-//        print("rankedAttributes: \(rankedAttributes)")
         for i in 0...6 {
             var ok: Bool = false
             for att in rankedAttributes {
@@ -323,7 +298,6 @@ extension DeckEditViewController: UITableViewDataSource {
                     ok = true
                 }
             }
-            //            print("i: \(i), ok: \(ok)")
             if ok == false {
                 switch i {
                 case 6:
@@ -397,10 +371,11 @@ extension DeckEditViewController: funcsManagerDelegate {
 extension DeckEditViewController: UITextFieldDelegate {
     func addContent(contentName: String) {
         let newContentName = (contentName.isEmpty ? String(Date().timeIntervalSince1970) : contentName)
-        print("contentName: \(newContentName)")
         self.sendData(uniqueContentName: newContentName, attributeKey: 0, attributeValue: "")
     }
 }
+
+// MARK: - SwipeTableViewDelegate
 
 extension DeckEditViewController: SwipeTableViewCellDelegate {
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
@@ -410,7 +385,7 @@ extension DeckEditViewController: SwipeTableViewCellDelegate {
             
             let alert = UIAlertController(
                 title: "Delete Content",
-                message: "Are you sure you want to delete the content\(self.contents[indexPath.row].uniqueContentName)",
+                message: "Are you sure you want to delete the content?",
                 preferredStyle: UIAlertController.Style.alert)
             alert.addAction(
                 UIAlertAction(
@@ -451,9 +426,6 @@ extension DeckEditViewController: InputTextTableCellDelegate {
     func cellTextFieldDidEndEditing(cell: TestTableViewCell, textFieldIndex: Int, value: String) {
         if let indexPath = deckTableView.indexPathForRow(at: cell.convert(cell.bounds.origin, to: deckTableView)) {
             self.sendData(uniqueContentName: contents[indexPath.row].uniqueContentName, attributeKey: textFieldIndex, attributeValue: value)
-            print("uniqueContentName: \(contents[indexPath.row].uniqueContentName)")
-            //            print("attributeKey: \(Attributes[textFieldIndex])")
-            print("attributeValue: \(value)")
         }
     }
 }
@@ -554,7 +526,6 @@ extension DeckEditViewController: SideMenuViewDelegate {
     }
     
     func attributeRankSelected(rank: [Int]) {
-        print("rank selected.")
         self.rankedAttributes = rank
         deckDocRef?.updateData([
             K.Fstore.data.rank: rank

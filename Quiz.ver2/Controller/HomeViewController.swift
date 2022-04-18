@@ -21,13 +21,16 @@ class HomeViewController: UIViewController {
     let auth = Auth.auth()
     let actionButton = DTZFloatingActionButton()
     var userID: String?
+    var logOutButtonItem: UIBarButtonItem!
     
     @IBOutlet weak var homeTableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        logOutButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrowshape.zigzag.right"), style: .plain, target: self, action: #selector(logOutPressed(_:)))
         navigationItem.title = "Folders"
+        navigationItem.rightBarButtonItem = logOutButtonItem
         funcsManager.delegate = self
         homeTableView.dataSource = self
         homeTableView.delegate = self
@@ -59,8 +62,28 @@ class HomeViewController: UIViewController {
 //
 //    }
     
-    @objc func selectorX() {
-        
+    @objc func logOutPressed(_ sender: UIBarButtonItem) {
+        let alert = UIAlertController(
+            title: "Log Out",
+            message: "Are you sure you want to Log Out?",
+            preferredStyle: UIAlertController.Style.alert)
+        alert.addAction(
+            UIAlertAction(
+                title: "Cancel",
+                style: UIAlertAction.Style.cancel,
+                handler: nil))
+        alert.addAction(
+            UIAlertAction(
+                title: "OK",
+                style: UIAlertAction.Style.default,
+                handler: {_ in
+                    do {
+                        try self.auth.signOut()
+                    } catch let err as NSError {
+                        self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
+                    }
+                }))
+        self.present(alert, animated: true, completion: nil)
     }
     
     func loadFolders(userID: String) {
@@ -152,6 +175,7 @@ extension HomeViewController: UITableViewDataSource {
         nextView.folderUniqueName = folders[indexPath.row].uniqueName
         let nav = UINavigationController(rootViewController: nextView)
         nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
         present(nav, animated: true)
         
         

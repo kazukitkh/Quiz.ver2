@@ -19,10 +19,15 @@ class RegisterViewController: UIViewController {
     let db = Firestore.firestore()
     var auth: Auth!
     var funcsManager = FuncsManager()
+    var backBarButtonItem: UIBarButtonItem!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        backBarButtonItem = UIBarButtonItem(
+            title: "Back", style: .plain, target: self, action: #selector(goBack(_:))
+        )
+        navigationItem.leftBarButtonItem = backBarButtonItem
         auth = Auth.auth()
         registerButton.layer.cornerRadius = 10
         registerButton.setTitle("Register", for: .normal)
@@ -53,6 +58,15 @@ class RegisterViewController: UIViewController {
                 }
             })
         }
+    }
+    
+    @objc func goBack(_ sender: UIBarButtonItem) {
+        let storyboard: UIStoryboard = self.storyboard!
+        let next = storyboard.instantiateViewController(withIdentifier: K.launchStoryBoardId) as! LaunchViewController
+        let nav = UINavigationController(rootViewController: next)
+        nav.modalPresentationStyle = .fullScreen
+        nav.modalTransitionStyle = .crossDissolve
+        present(nav, animated: true)
     }
     
     @IBAction func registerButtonAction(_ sender: UIButton) {
