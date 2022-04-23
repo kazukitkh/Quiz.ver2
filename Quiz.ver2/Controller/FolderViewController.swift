@@ -16,6 +16,7 @@ import CodableFirebase
 
 class FolderViewController: UIViewController {
     
+    var numberOfDecks: Int = 0
     var folderName: String = ""
     var folderUniqueName: String = ""
     var decks:[Deck] = []
@@ -33,7 +34,7 @@ class FolderViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        logOutButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrowshape.zigzag.right"), style: .plain, target: self, action: #selector(logOutPressed(_:)))
+        logOutButtonItem = UIBarButtonItem(image: UIImage(named: "LogOutImageSmall")!, style: .plain, target: self, action: #selector(logOutPressed(_:)))
         navigationItem.rightBarButtonItem = logOutButtonItem
         navigationItem.title = folderName
         backBarButtonItem = UIBarButtonItem(
@@ -88,6 +89,12 @@ class FolderViewController: UIViewController {
                 handler: {_ in
                     do {
                         try self.auth.signOut()
+                        let storyboard: UIStoryboard = self.storyboard!
+                        let next = storyboard.instantiateViewController(withIdentifier: K.launchStoryBoardId) as! LaunchViewController
+                        let nav = UINavigationController(rootViewController: next)
+                        nav.modalPresentationStyle = .fullScreen
+                        nav.modalTransitionStyle = .crossDissolve
+                        self.present(nav, animated: true)
                     } catch let err as NSError {
                         self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
                     }
@@ -97,7 +104,6 @@ class FolderViewController: UIViewController {
     
     func loadDecks(userID: String) {
         colRef = db.collection(K.Fstore.collections.user).document(userID).collection(K.Fstore.collections.folders).document(folderUniqueName).collection(K.Fstore.collections.decks)
-        //        print("colRef: \(colRef?.collectionID)")
         colRef?.order(by: K.Fstore.data.lastUsed, descending: true).addSnapshotListener { querySnapshot, error in
             self.decks = []
             if let e = error {
@@ -130,6 +136,13 @@ class FolderViewController: UIViewController {
             err in
             if let err = err {
                 self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
+            } else {
+                if self.numberOfDecks >= 1 {
+                    self.numberOfDecks -= 1
+                    self.db.collection(K.Fstore.collections.user).document(self.userID!).collection(K.Fstore.collections.folders).document(self.folderUniqueName).updateData([
+                        K.Fstore.data.numberOfContents: self.numberOfDecks
+                    ])
+                }
             }
         }
     }
@@ -162,6 +175,10 @@ class FolderViewController: UIViewController {
                         K.Fstore.data.lastUsed: Double(uniqueName)!,
                         K.Fstore.data.rank: rankedArray
                     ])
+                    self.numberOfDecks += 1
+                    self.db.collection(K.Fstore.collections.user).document(self.userID!).collection(K.Fstore.collections.folders).document(self.folderUniqueName).updateData([
+                        K.Fstore.data.numberOfContents: self.numberOfDecks
+                    ])
                 }
             }
         }
@@ -186,6 +203,10 @@ extension FolderViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        colRef!.document(decks[indexPath.row].uniqueName).updateData([
+            K.Fstore.data.lastUsed: Date().timeIntervalSince1970
+        ])
         
         let nextView = self.storyboard?.instantiateViewController(withIdentifier: K.deckEditStoryBoardId) as! DeckEditViewController
         nextView.folderUniqueName = folderUniqueName
@@ -220,7 +241,6 @@ extension FolderViewController: funcsManagerDelegate {
 
 extension FolderViewController: UITextFieldDelegate {
     func addDeck(deckName: String, uniqueName: String) {
-        print("deck name: \(deckName)")
         var alertTextField: UITextField?
         
         let alert = UIAlertController(

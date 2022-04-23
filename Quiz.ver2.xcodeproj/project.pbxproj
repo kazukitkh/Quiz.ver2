@@ -10,6 +10,7 @@
 		2B3B375F8D7653CB4C088033 /* Pods_Quiz_ver2Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C647AB92ADBD063C431F8FF7 /* Pods_Quiz_ver2Tests.framework */; };
 		3E3540594AF9932E78A9FC9A /* Pods_Quiz_ver2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C36A69474737506D2D3D80B /* Pods_Quiz_ver2.framework */; };
 		57E9A6E4F0A97747784C90C1 /* Pods_Quiz_ver2_Quiz_ver2UITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A27189F91FC725DFB7717787 /* Pods_Quiz_ver2_Quiz_ver2UITests.framework */; };
+		6C00B0E428148E590052FA1C /* UIExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C00B0E328148E590052FA1C /* UIExtension.swift */; };
 		6C57BEE528095AAA00D30B2B /* NumberOfAttributesCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C57BEE328095AAA00D30B2B /* NumberOfAttributesCell.swift */; };
 		6C57BEE628095AAA00D30B2B /* NumberOfAttributesCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6C57BEE428095AAA00D30B2B /* NumberOfAttributesCell.xib */; };
 		6C57BEE92809789F00D30B2B /* ConfirmTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C57BEE72809789F00D30B2B /* ConfirmTableViewCell.swift */; };
@@ -72,6 +73,7 @@
 		2B1AC5557F33945E7044F1F8 /* Pods-Quiz.ver2-Quiz.ver2UITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quiz.ver2-Quiz.ver2UITests.release.xcconfig"; path = "Target Support Files/Pods-Quiz.ver2-Quiz.ver2UITests/Pods-Quiz.ver2-Quiz.ver2UITests.release.xcconfig"; sourceTree = "<group>"; };
 		4C36A69474737506D2D3D80B /* Pods_Quiz_ver2.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Quiz_ver2.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4FD2D099E5E720556F5CC2C4 /* Pods-Quiz.ver2.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quiz.ver2.release.xcconfig"; path = "Target Support Files/Pods-Quiz.ver2/Pods-Quiz.ver2.release.xcconfig"; sourceTree = "<group>"; };
+		6C00B0E328148E590052FA1C /* UIExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIExtension.swift; sourceTree = "<group>"; };
 		6C57BEE328095AAA00D30B2B /* NumberOfAttributesCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberOfAttributesCell.swift; sourceTree = "<group>"; };
 		6C57BEE428095AAA00D30B2B /* NumberOfAttributesCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = NumberOfAttributesCell.xib; sourceTree = "<group>"; };
 		6C57BEE72809789F00D30B2B /* ConfirmTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmTableViewCell.swift; sourceTree = "<group>"; };
@@ -225,6 +227,7 @@
 				6C83536327E4752B0065573E /* Structs.swift */,
 				6C83536927E582E00065573E /* Functions.swift */,
 				6CB19224280379BD000074CA /* LearnUIView.swift */,
+				6C00B0E328148E590052FA1C /* UIExtension.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -552,6 +555,7 @@
 				6C83535827E275BB0065573E /* LaunchViewController.swift in Sources */,
 				6CB1922828038752000074CA /* LearnCollectionViewCell.swift in Sources */,
 				6C57BEE528095AAA00D30B2B /* NumberOfAttributesCell.swift in Sources */,
+				6C00B0E428148E590052FA1C /* UIExtension.swift in Sources */,
 				6C83535427E275520065573E /* RegisterViewController.swift in Sources */,
 				6CA62E702809449A00E6E24D /* ChangeAttributeTableViewCell.swift in Sources */,
 				6C83536027E384B40065573E /* AppUser.swift in Sources */,

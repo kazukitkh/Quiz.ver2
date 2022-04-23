@@ -57,10 +57,10 @@ class DeckEditViewController: UIViewController {
     @IBOutlet weak var deckTableView: UITableView!
     @IBOutlet weak var addButton: UIButton!
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        addButton.layer.cornerRadius = 0.5 * addButton.bounds.size.width
         if let user = auth.currentUser {
             userID = user.uid
             numberOfAttributes = rankedAttributes.count
@@ -77,9 +77,6 @@ class DeckEditViewController: UIViewController {
         view.insertSubview(self.sideMenuViewController!.view, at: view.subviews.count)
         addChild(self.sideMenuViewController!)
         self.sideMenuViewController!.didMove(toParent: self)
-//        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture))
-//        panGestureRecognizer.delegate = self
-//        view.addGestureRecognizer(panGestureRecognizer)
         self.sideMenuShadowView = UIView(frame: self.view.bounds)
         self.sideMenuShadowView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         self.sideMenuShadowView.backgroundColor = .black
@@ -89,7 +86,7 @@ class DeckEditViewController: UIViewController {
         tapGestureRecognizer.delegate = self
         view.addGestureRecognizer(tapGestureRecognizer)
         if self.revealSideMenuOnTop {
-            view.insertSubview(self.sideMenuShadowView, at: 1)
+            view.insertSubview(self.sideMenuShadowView, at: 3)
         }
         
         // Side Menu AutoLayout
@@ -137,6 +134,7 @@ class DeckEditViewController: UIViewController {
     }
     
     @IBAction func addButtonPressed(_ sender: Any) {
+        addButton.buttonTappedAnimation()
         self.addContent(contentName: "")
     }
     
@@ -207,11 +205,13 @@ class DeckEditViewController: UIViewController {
                         if let contentName = data[K.Fstore.data.contentName] as? String, let attributes = data[K.Fstore.data.attributes] as? [String], let groups = data[K.Fstore.data.groups] as? [Int] {
                             let newContent = Content(uniqueContentName: contentName, attributes: attributes, groups: groups)
                             self.contents.append(newContent)
+                            
                             DispatchQueue.main.async {
                                 self.deckTableView.reloadData()
-                                let indexPath = IndexPath(row: self.contents.count - 1, section: 0)
-                                self.deckTableView.scrollToRow(at: indexPath, at: .top, animated: false)
+                                //                                    let indexPath = IndexPath(row: self.contents.count - 1, section: 0)
+                                //                                    self.deckTableView.scrollToRow(at: indexPath, at: .top, animated: false)
                             }
+                            
                         }
                     }
                     self.deckDocRef?.updateData([
@@ -505,6 +505,12 @@ extension DeckEditViewController: SideMenuViewDelegate {
                     do {
                         try self.auth.signOut()
                         DispatchQueue.main.async { self.sideMenuState(expanded: false) }
+                        let storyboard: UIStoryboard = self.storyboard!
+                        let next = storyboard.instantiateViewController(withIdentifier: K.launchStoryBoardId) as! LaunchViewController
+                        let nav = UINavigationController(rootViewController: next)
+                        nav.modalPresentationStyle = .fullScreen
+                        nav.modalTransitionStyle = .crossDissolve
+                        self.present(nav, animated: true)
                     } catch let err as NSError {
                         self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
                     }

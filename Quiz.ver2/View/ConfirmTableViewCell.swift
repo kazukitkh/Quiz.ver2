@@ -22,7 +22,10 @@ class ConfirmTableViewCell: UITableViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
-        
+        confirmButton.setTitle("Submit", for: .normal)
+        confirmButton.backgroundColor = UIColor.black
+        confirmButton.setTitleColor(.white, for: .normal)
+        confirmButton.layer.cornerRadius = 20
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {
@@ -32,7 +35,15 @@ class ConfirmTableViewCell: UITableViewCell {
     }
     
     @IBAction func confirmButtonPressed(_ sender: Any) {
+        confirmButton.backgroundColor = UIColor.red.withAlphaComponent(0.3)
+        confirmButton.setTitleColor(.black, for: .normal)
         self.delegate?.confirmPressed()
     }
+    
+    @IBAction func confirmButtonTouchDown(_ sender: Any) {
+        confirmButton.backgroundColor = UIColor.black
+        confirmButton.setTitleColor(.white, for: .normal)
+    }
+    
     
 }

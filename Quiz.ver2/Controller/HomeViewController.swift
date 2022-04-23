@@ -15,6 +15,7 @@ import PromiseKit
 
 class HomeViewController: UIViewController {
     
+    var colRef: CollectionReference?
     var folders: [Folder] = []
     let db = Firestore.firestore()
     var funcsManager = FuncsManager()
@@ -28,7 +29,7 @@ class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        logOutButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrowshape.zigzag.right"), style: .plain, target: self, action: #selector(logOutPressed(_:)))
+        logOutButtonItem = UIBarButtonItem(image: UIImage(named: "LogOutImageSmall")!, style: .plain, target: self, action: #selector(logOutPressed(_:)))
         navigationItem.title = "Folders"
         navigationItem.rightBarButtonItem = logOutButtonItem
         funcsManager.delegate = self
@@ -53,15 +54,6 @@ class HomeViewController: UIViewController {
         }
     }
     
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//        let navItem = UINavigationItem(title: "SomeTitle")
-//        let backItem = UIBarButtonItem(title: "back", style: .plain, target: nil, action: nil)
-//        navItem.backBarButtonItem = backItem
-//        homeNavigationBar.setItems([navItem], animated: false)
-//
-//    }
-    
     @objc func logOutPressed(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(
             title: "Log Out",
@@ -79,6 +71,12 @@ class HomeViewController: UIViewController {
                 handler: {_ in
                     do {
                         try self.auth.signOut()
+                        let storyboard: UIStoryboard = self.storyboard!
+                        let next = storyboard.instantiateViewController(withIdentifier: K.launchStoryBoardId) as! LaunchViewController
+                        let nav = UINavigationController(rootViewController: next)
+                        nav.modalPresentationStyle = .fullScreen
+                        nav.modalTransitionStyle = .crossDissolve
+                        self.present(nav, animated: true)
                     } catch let err as NSError {
                         self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
                     }
@@ -87,7 +85,8 @@ class HomeViewController: UIViewController {
     }
     
     func loadFolders(userID: String) {
-        db.collection(K.Fstore.collections.user).document(userID).collection(K.Fstore.collections.folders).order(by: K.Fstore.data.lastUsed, descending: true).addSnapshotListener { querySnapshot, error in
+        colRef = db.collection(K.Fstore.collections.user).document(userID).collection(K.Fstore.collections.folders)
+        colRef!.order(by: K.Fstore.data.lastUsed, descending: true).addSnapshotListener { querySnapshot, error in
             self.folders = []
             
             if let e = error {
@@ -113,7 +112,7 @@ class HomeViewController: UIViewController {
     }
     
     func deleteFolder(uniqueName: String) {
-        db.collection(K.Fstore.collections.user).document(userID!).collection(K.Fstore.collections.folders).document(uniqueName).delete() {
+        colRef!.document(uniqueName).delete() {
             err in
             if let err = err {
                 self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
@@ -128,9 +127,7 @@ class HomeViewController: UIViewController {
         } else if newFolderName == "" {
             self.makeAlerts(title: "Error", message: "please type in something.", buttonName: "OK")
         }
-        
-        let colRef = db.collection(K.Fstore.collections.user).document(userID!).collection(K.Fstore.collections.folders)
-        let docRef = colRef.document(uniqueName)
+        let docRef = colRef!.document(uniqueName)
         docRef.getDocument { document, error in
             if let err = error {
                 self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
@@ -170,25 +167,18 @@ extension HomeViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        colRef!.document(folders[indexPath.row].uniqueName).updateData([
+            K.Fstore.data.lastUsed: Date().timeIntervalSince1970
+        ])
         let nextView = self.storyboard?.instantiateViewController(withIdentifier: K.folderStoryBoardId) as! FolderViewController
         nextView.folderName = folders[indexPath.row].folderName
         nextView.folderUniqueName = folders[indexPath.row].uniqueName
+        nextView.numberOfDecks = folders[indexPath.row].numberOfDecks
         let nav = UINavigationController(rootViewController: nextView)
         nav.modalPresentationStyle = .fullScreen
         nav.modalTransitionStyle = .crossDissolve
         present(nav, animated: true)
-        
-        
-//        performSegue(withIdentifier: "HomeToFolder", sender: self)
     }
-    
-//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-//        let destinationVC = segue.destination as! FolderViewController
-//        if let indexPath = homeTableView.indexPathForSelectedRow {
-//            destinationVC.folderUniqueName = folders[indexPath.row].uniqueName
-//            destinationVC.folderName = folders[indexPath.row].folderName
-//        }
-//    }
 }
 
 extension HomeViewController: UITableViewDelegate {

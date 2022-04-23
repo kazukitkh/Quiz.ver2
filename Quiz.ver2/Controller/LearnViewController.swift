@@ -10,7 +10,7 @@ import SwiftUI
 import Firebase
 
 class LearnViewController: UIViewController {
-
+    
     var gestureEnabled: Bool = true
     private var draggingIsEnabled: Bool = false
     private var panBaseLocation: CGFloat = 0.0
@@ -23,11 +23,11 @@ class LearnViewController: UIViewController {
     let sideMenu: [SideMenuModel] = [
         SideMenuModel(icon: UIImage(named: "LogOutImage")!, title: "Log Out"),
         SideMenuModel(icon: UIImage(systemName: "delete.left")!, title: "Delete the content"),
-        SideMenuModel(icon: UIImage(systemName: "pencil")!, title: "Change Attribute Names"),
-        SideMenuModel(icon: UIImage(systemName: "plus")!, title: "Add Content")
+        SideMenuModel(icon: UIImage(systemName: "pencil")!, title: "Change Attribute Names")
     ]
     
     @objc private var revealSideMenuOnTop: Bool = true
+    var isEnd: Bool = false
     var deckUniqueName: String = ""
     var isRevise: Bool = false
     var isShuffle: Bool = false
@@ -47,25 +47,30 @@ class LearnViewController: UIViewController {
     var attributeTitles:[String] = []
     var attributeTerms:[String] = [] {
         didSet {
-            showButttons(isEnd: false)
+            showButttons()
             showTerm()
         }
     }
     var contentIdx: Int = 0 {
         didSet {
             if contentIdx >= contents.count {
-                showButttons(isEnd: true)
+                isEnd = true
+                showButttons()
             } else {
+                isEnd = false
                 changeTerms(uniqueName: contents[contentIdx].uniqueContentName)
-                showButttons(isEnd: false)
+                showButttons()
             }
+            loadSideMenuViewController()
         }
     }
     var attributeIdx: Int = 0 {
         didSet {
-            showButttons(isEnd: false)
-            showTitle()
-            showTerm()
+            showButttons()
+            if !isEnd {
+                showTitle()
+                showTerm()
+            }
         }
     }
     var backBarButtonItem: UIBarButtonItem!
@@ -103,8 +108,6 @@ class LearnViewController: UIViewController {
         }
         let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
         self.sideMenuViewController = storyboard.instantiateViewController(withIdentifier: K.sideMenuStoryBoardId) as? SideMenuViewController
-        loadSideMenuViewController()
-        loadLearnViewController()
         self.sideMenuViewController.delegate = self
         view.insertSubview(self.sideMenuViewController!.view, at: view.subviews.count)
         addChild(self.sideMenuViewController!)
@@ -119,7 +122,7 @@ class LearnViewController: UIViewController {
         tapGestureRecognizer.delegate = self
         view.addGestureRecognizer(tapGestureRecognizer)
         if self.revealSideMenuOnTop {
-            view.insertSubview(self.sideMenuShadowView, at: 1)
+            view.insertSubview(self.sideMenuShadowView, at: 4)
         }
         
         // Side Menu AutoLayout
@@ -135,7 +138,6 @@ class LearnViewController: UIViewController {
             self.sideMenuViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             self.sideMenuViewController.view.topAnchor.constraint(equalTo: view.topAnchor)
         ])
-        
         funcsManager.delegate = self
         backBarButtonItem = UIBarButtonItem(title: "back", style: .plain, target: self, action: #selector(goBack(_:)))
         moreBarButtonItem = UIBarButtonItem(image: UIImage(named: "MoreIcon"), style: .plain, target: self, action: #selector(morePressed(_:)))
@@ -143,18 +145,17 @@ class LearnViewController: UIViewController {
         self.navigationItem.leftBarButtonItem = backBarButtonItem
         self.navigationItem.rightBarButtonItem = moreBarButtonItem
         if contents.count == 0 {
-            print("goEnd()")
             goEnd()
         } else {
             initTitles()
             self.changeTerms(uniqueName: self.contents[self.contentIdx].uniqueContentName)
         }
+        loadLearnViewController(learnPressed: false, isDeleted: false)
     }
     
     @IBAction func learnButtonPressed(_ sender: Any) {
-        loadLearnViewController()
-        contentIdx = 0
-        attributeIdx = 0
+        isEnd = false
+        loadLearnViewController(learnPressed: true, isDeleted: false)
     }
     
     @IBAction func shuffleButtonPressed(_ sender: Any) {
@@ -175,61 +176,107 @@ class LearnViewController: UIViewController {
         }
     }
     
-    
-    func loadLearnViewController() {
+    func fetchCards2_2(temp: [Content], completion: @escaping ([Content]) -> Void) {
         var newContents:[Content] = []
-        colRef.order(by: K.Fstore.data.lastMade).addSnapshotListener { querySnapshot, error in
-            self.contents = []
-            if let e = error {
-                self.makeAlerts(title: "Error", message: e.localizedDescription, buttonName: "OK")
+        for (cIdx, content) in temp.enumerated() {
+            for (idx, num) in self.rankedAttributes.enumerated() {
+                if idx == 0 {
+                    continue
+                }
+                self.colRef.document(content.uniqueContentName).collection(K.Fstore.collections.term).document(String(num)).getDocument(completion: { snapshot, err in
+                    if let err = err {
+                        self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
+                    } else {
+                        if let doc = snapshot, doc.exists {
+                            let data = doc.data()
+                            if let arr = data?[K.Fstore.data.correctOrWrong] as? [Bool] {
+                                print("came inside.")
+                                if arr[self.rankedAttributes[0]] == false {
+                                    newContents.append(content)
+                                }
+                            }
+                        }
+                    }
+                    if cIdx + 1 == temp.count && idx + 1 == self.rankedAttributes.count {
+                        print("Cards2_2: \(newContents.map {$0.uniqueContentName})")
+                        completion(newContents)
+                        return
+                    }
+                })
+            }
+        }
+    }
+    
+    func fetchCards1_2(completion: @escaping ([Content]) -> Void) {
+        colRef.order(by: K.Fstore.data.lastMade).getDocuments { snapShot, err in
+            var temps: [Content] = []
+            if let err = err {
+                self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
+                completion([])
             } else {
-                if let snapshotDocs = querySnapshot?.documents {
-                    for contentDoc in snapshotDocs {
+                if let snapshotDocs = snapShot?.documents {
+                    for (_, contentDoc) in snapshotDocs.enumerated() {
                         let data = contentDoc.data()
                         if let contentName = data[K.Fstore.data.contentName] as? String, let attributes = data[K.Fstore.data.attributes] as? [String], let groups = data[K.Fstore.data.groups] as? [Int] {
                             let newContent = Content(uniqueContentName: contentName, attributes: attributes, groups: groups)
-                            self.contents.append(newContent)
+                            temps.append(newContent)
                         }
                     }
-                    self.deckDocRef?.updateData([
-                        K.Fstore.data.numberOfContents: self.contents.count
-                    ])
                 }
-                print("contents: \(self.contents)")
-                if self.isRevise {
-                    for content in self.contents {
-                        var ok: Bool = true
-                        for (idx, num) in self.rankedAttributes.enumerated() {
-                            if idx == 0 {
-                                continue
-                            }
-                            self.colRef.document(content.uniqueContentName).collection(K.Fstore.collections.term).document(String(num)).getDocument(completion: { snapshot, err in
-                                if let err = err {
-                                    self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
-                                } else {
-                                    if let doc = snapshot, doc.exists {
-                                        let data = doc.data()
-                                        if let arr = data?[K.Fstore.data.correctOrWrong] as? [Bool] {
-                                            if arr[self.rankedAttributes[0]] == false {
-                                                ok = false
-                                            }
-                                        }
-                                    }
-                                }
-                            })
-                        }
-                        if ok == false {
-                            newContents.append(content)
-                        }
-                    }
+                print("Cards1_2: \(temps.map {$0.uniqueContentName})")
+                completion(temps)
+            }
+        }
+    }
+    
+    func fetchCards1_1() async -> [Content] {
+        await withCheckedContinuation({ continuation in
+            fetchCards1_2 { contents in
+                continuation.resume(returning: contents)
+            }
+        })
+    }
+    
+    func fetchCards2_1(temp: [Content]) async -> [Content] {
+        await withCheckedContinuation({ continuation in
+            fetchCards2_2(temp: temp) { contents in
+                continuation.resume(returning: contents)
+            }
+        })
+    }
+    
+    func loadLearnViewController(learnPressed: Bool, isDeleted: Bool) {
+        Task {
+            self.contents = []
+            var contents1 = await fetchCards1_1()
+            print("contents1: \(contents1.map {$0.uniqueContentName})")
+            if self.isShuffle {
+                contents1.shuffle()
+            }
+            if self.isRevise {
+                self.contents = await fetchCards2_1(temp: contents1)
+            } else {
+                print("no revise")
+                self.contents = contents1
+            }
+            if learnPressed {
+                contentIdx = 0
+                attributeIdx = 0
+            }
+            if isDeleted {
+                if self.contentIdx >= self.contents.count {
+                    self.isEnd = true
+                    self.showButttons()
                 } else {
-                    newContents = self.contents
+                    self.isEnd = false
+                    self.changeTerms(uniqueName: self.contents[self.contentIdx].uniqueContentName)
+                    self.showButttons()
                 }
-                if self.isShuffle {
-                    newContents.shuffle()
+                attributeIdx = 0
+            } else {
+                if contentIdx < contents.count {
+                    self.changeTerms(uniqueName: self.contents[self.contentIdx].uniqueContentName)
                 }
-                self.contents = newContents
-                print("contents2: \(self.contents)")
             }
             self.loadSideMenuViewController()
         }
@@ -261,11 +308,17 @@ class LearnViewController: UIViewController {
             err in
             if let err = err {
                 self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
+            } else {
+                self.loadLearnViewController(learnPressed: false, isDeleted: true)
+                let temp = [self.contentIdx, self.attributeIdx]
+                self.contentIdx = temp[0]
+                self.attributeIdx = temp[1]
+                self.loadSideMenuViewController()
             }
         }
     }
- 
-    func showButttons(isEnd: Bool) {
+    
+    func showButttons() {
         shuffleButton.isHidden = true
         learnButton.isHidden = true
         reviseButton.isHidden = true
@@ -275,7 +328,7 @@ class LearnViewController: UIViewController {
         skipButton.isHidden = false
         centerLeftButton.isHidden = false
         centerRightButton.isHidden = false
-        if isEnd {
+        if self.isEnd {
             correctButton.isHidden = true
             wrongButton.isHidden = true
             skipButton.isHidden = true
@@ -284,7 +337,6 @@ class LearnViewController: UIViewController {
             reviseButton.isHidden = false
             shuffleButton.isHidden = false
             learnButton.isHidden = false
-            print("goEnd")
             goEnd()
             return
         } else if contentIdx == 0 {
@@ -328,6 +380,7 @@ class LearnViewController: UIViewController {
     func goEnd() {
         titleLable.text = ""
         contentLabel.text = "Finished"
+        self.isEnd = true
         self.sideMenuViewController.isLearnEnd = true
     }
     
@@ -374,41 +427,54 @@ class LearnViewController: UIViewController {
     
     
     @IBAction func centerRightButtonAction(_ sender: Any) {
+        centerRightButton.buttonBackgroundAnimation()
+//        centerRightButton.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+//        Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(clearButtonBackGround), userInfo: nil, repeats: false)
         goRight(justMove: true)
     }
     
     @IBAction func centerLeftButtonAction(_ sender: Any) {
+        centerLeftButton.buttonBackgroundAnimation()
+//        centerLeftButton.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+//        Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(clearButtonBackGround), userInfo: nil, repeats: false)
         if attributeIdx > 0 {
             attributeIdx -= 1
         }
     }
     
     @IBAction func correctButtonAction(_ sender: Any) {
+        correctButton.buttonTappedAnimation()
         changeCorrectOrWrong(isCorrect: true)
         goRight(justMove: false)
     }
     
     
     @IBAction func wrongButtonAction(_ sender: Any) {
+        wrongButton.buttonTappedAnimation()
         changeCorrectOrWrong(isCorrect: false)
         goRight(justMove: false)
     }
     
     
     @IBAction func backButtonAction(_ sender: Any) {
+        goBackButton.buttonTappedAnimation()
         if contentIdx > 0 {
             contentIdx -= 1
             attributeIdx = 0
         }
     }
     
-
+    
     @IBAction func skipButtonPressed(_ sender: Any) {
+        skipButton.buttonTappedAnimation()
         attributeIdx = numberOfAttributes - 1
         goRight(justMove: false)
     }
     
-    
+    @objc func clearButtonBackGround() {
+        centerLeftButton.backgroundColor = UIColor.clear
+        centerRightButton.backgroundColor = UIColor.clear
+    }
 }
 
 extension LearnViewController: funcsManagerDelegate {
@@ -437,7 +503,7 @@ extension LearnViewController: SideMenuViewDelegate {
         colRef.document(contents[contentIdx].uniqueContentName).updateData([
             K.Fstore.data.attributes: newAttributes
         ])
-        self.loadSideMenuViewController()
+        self.loadLearnViewController(learnPressed: false, isDeleted: false)
     }
     
     func attributeNameSelected(attIdx: Int) {
@@ -489,6 +555,12 @@ extension LearnViewController: SideMenuViewDelegate {
                     do {
                         try self.auth.signOut()
                         DispatchQueue.main.async { self.sideMenuState(expanded: false) }
+                        let storyboard: UIStoryboard = self.storyboard!
+                        let next = storyboard.instantiateViewController(withIdentifier: K.launchStoryBoardId) as! LaunchViewController
+                        let nav = UINavigationController(rootViewController: next)
+                        nav.modalPresentationStyle = .fullScreen
+                        nav.modalTransitionStyle = .crossDissolve
+                        self.present(nav, animated: true)
                     } catch let err as NSError {
                         self.makeAlerts(title: "Error", message: err.localizedDescription, buttonName: "OK")
                     }
@@ -504,8 +576,6 @@ extension LearnViewController: SideMenuViewDelegate {
             self.deleteContent()
         case 2:
             self.sideMenuViewController.changeAttributeName = true
-        case 3:
-            break
         default:
             break
         }
@@ -517,7 +587,8 @@ extension LearnViewController: SideMenuViewDelegate {
         deckDocRef?.updateData([
             K.Fstore.data.rank: rank
         ])
-        self.loadSideMenuViewController()
+        self.loadLearnViewController(learnPressed: false, isDeleted: false)
+//        self.loadSideMenuViewController()
     }
     
     func showViewController<T: UIViewController>(viewController: T.Type, storyboardId: String) -> () {

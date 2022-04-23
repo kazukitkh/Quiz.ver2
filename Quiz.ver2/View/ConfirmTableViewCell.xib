@@ -17,15 +17,16 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="68d-NO-4eI">
-                        <rect key="frame" x="125" y="2" width="70" height="40"/>
+                        <rect key="frame" x="110" y="2" width="100" height="40"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="40" id="aba-47-4Ma"/>
-                            <constraint firstAttribute="width" constant="70" id="eOa-eQ-gmW"/>
+                            <constraint firstAttribute="width" constant="100" id="eOa-eQ-gmW"/>
                         </constraints>
                         <state key="normal" title="Button"/>
                         <buttonConfiguration key="configuration" style="plain" title="Button"/>
                         <connections>
                             <action selector="confirmButtonPressed:" destination="KGk-i7-Jjw" eventType="touchUpInside" id="DQn-rP-waW"/>
+                            <action selector="confirmButtonTouchDown:" destination="KGk-i7-Jjw" eventType="touchDown" id="c70-OB-Uc4"/>
                         </connections>
                     </button>
                 </subviews>
